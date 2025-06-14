@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; padding: 30px; color: #333; }
+    .invoice-box { max-width: 700px; margin: auto; border: 1px solid #eee; padding: 30px; border-radius: 8px; }
+    h1, h2, h3 { text-align: center; margin-bottom: 0; }
+    .header, .section { margin-bottom: 20px; }
+    .section p { margin: 4px 0; }
+    .highlight { font-weight: bold; font-size: 18px; color: #111; }
+    .line { border-top: 1px solid #eee; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="invoice-box">
+    <h1>INVOICE</h1>
+    <h3>#{{ invoice_id }}</h3>
+
+    <div class="section">
+      <p><strong>From:</strong> {{ creator_name }}</p>
+      <p><strong>To:</strong> {{ client_name }}</p>
+    </div>
+
+    <div class="section">
+      <p><strong>Project:</strong> {{ project_name }}</p>
+      <p><strong>Date:</strong> {{ invoice_date }}</p>
+      <p><strong>Due:</strong> {{ due_date }}</p>
+    </div>
+
+    <div class="line"></div>
+
+    <div class="section">
+      <p><strong>Deliverables:</strong></p>
+      <p>{{ deliverables }}</p>
+    </div>
+
+    <div class="section">
+      <p class="highlight">Total: ${{ '%.2f'|format(total_amount) }}</p>
+      <p><strong>Payment Method:</strong> {{ payment_method }}</p>
+    </div>
+
+    {% if notes %}
+    <div class="line"></div>
+    <div class="section">
+      <p><strong>Notes:</strong></p>
+      <p>{{ notes }}</p>
+    </div>
+    {% endif %}
+
+
+    <div class="line"></div>
+    <p style="text-align:center; font-size: 12px;">Thank you for your collaboration </p>
+  </div>
+</body>
+</html>
