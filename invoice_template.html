@@ -1,82 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
+  <meta charset="UTF-8" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
     body {
-      font-family: Helvetica, Arial, sans-serif;
+      font-family: 'Inter', sans-serif;
+      color: #2e2e2e;
+      padding: 40px;
       font-size: 14px;
-      color: #222;
-      padding: 30px;
     }
-    h1 {
+
+    .header {
       text-align: center;
-      font-size: 24px;
-      margin-bottom: 10px;
+      margin-bottom: 40px;
     }
+
+    h1 {
+      font-size: 28px;
+      margin: 0;
+      color: #111;
+    }
+
+    .invoice-id {
+      font-size: 14px;
+      margin-top: 5px;
+      color: #777;
+    }
+
     .section {
-      margin-bottom: 20px;
+      margin-bottom: 30px;
     }
+
     .label {
-      font-weight: bold;
+      font-weight: 600;
+      color: #444;
     }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-table td {
+      padding: 6px 0;
+      vertical-align: top;
+    }
+
     .line {
-      border-top: 1px solid #ccc;
+      border-top: 1px solid #ddd;
       margin: 30px 0;
     }
+
+    .deliverables {
+      background: #f9f9f9;
+      padding: 12px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      border: 1px solid #eee;
+    }
+
     .total {
+      text-align: right;
       font-size: 18px;
       font-weight: bold;
-      text-align: right;
+      margin-top: 20px;
     }
+
     .footer {
       margin-top: 40px;
-      font-size: 12px;
       text-align: center;
-      color: #777;
+      font-size: 12px;
+      color: #888;
     }
   </style>
 </head>
 <body>
 
-  <h1>INVOICE</h1>
-  <p style="text-align: center;">#{{ invoice_id }}</p>
-
-  <div class="section">
-    <p><span class="label">From:</span> {{ creator_name }}</p>
-    <p><span class="label">To:</span> {{ client_name }}</p>
+  <div class="header">
+    <h1>INVOICE</h1>
+    <div class="invoice-id">#{{ invoice_id }}</div>
   </div>
 
   <div class="section">
-    <p><span class="label">Project:</span> {{ project_name }}</p>
-    <p><span class="label">Date:</span> {{ invoice_date }}</p>
-    <p><span class="label">Due:</span> {{ due_date }}</p>
+    <table class="info-table">
+      <tr>
+        <td><span class="label">From:</span> {{ creator_name }}</td>
+        <td><span class="label">To:</span> {{ client_name }}</td>
+      </tr>
+      <tr>
+        <td><span class="label">Project:</span> {{ project_name }}</td>
+        <td><span class="label">Payment Method:</span> {{ payment_method }}</td>
+      </tr>
+      <tr>
+        <td><span class="label">Date:</span> {{ invoice_date }}</td>
+        <td><span class="label">Due:</span> {{ due_date }}</td>
+      </tr>
+    </table>
   </div>
 
   <div class="section">
-    <p><span class="label">Deliverables:</span></p>
-    <pre style="white-space: pre-wrap;">{{ deliverables }}</pre>
+    <span class="label">Deliverables:</span>
+    <div class="deliverables">{{ deliverables }}</div>
   </div>
 
   <div class="line"></div>
 
-  <div class="section total">
+  <div class="total">
     Total: ${{ '%.2f'|format(total_amount) }}
-  </div>
-
-  <div class="section">
-    <p><span class="label">Payment Method:</span> {{ payment_method }}</p>
   </div>
 
   {% if notes %}
   <div class="section">
-    <p><span class="label">Notes:</span></p>
+    <span class="label">Notes:</span>
     <p>{{ notes }}</p>
   </div>
   {% endif %}
 
   <div class="footer">
-    Thank you for your business! 💼
+    Thanks for your business!
   </div>
 
 </body>
