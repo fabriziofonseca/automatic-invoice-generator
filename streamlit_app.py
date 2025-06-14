@@ -3,98 +3,104 @@ from datetime import date
 from jinja2 import Template
 import base64
 import tempfile
-import smtplib
 import requests
+import smtplib
 from email.message import EmailMessage
-import traceback
 
-st.set_page_config(page_title="Invoice Generator", page_icon="💸")
+# --- Load Secrets ---
+EMAIL_USER = st.secrets["EMAIL_USER"]
+EMAIL_PASS = st.secrets["EMAIL_PASS"]
+PDFSHIFT_API_KEY = st.secrets["PDFSHIFT_API_KEY"]
 
-st.title("💸 Invoice Generator for Creators")
-st.write("Generate a professional invoice as a PDF and send it via email.")
+# --- Page Config ---
+st.set_page_config(page_title="Creator Invoice Generator", page_icon="💼")
+st.title("💼 Invoice Generator for Coaches & Creators")
+st.markdown("Generate and email a beautiful, client-ready invoice in seconds.")
 
 # --- FORM ---
 with st.form("invoice_form"):
-    st.subheader("📝 Fill in your invoice details")
-    creator_name = st.text_input("Your Name or Brand", "Fabrizio Fonseca")
-    client_name = st.text_input("Client or Brand Name")
-    project_name = st.text_input("Project Name (e.g. June Social Content)")
-    deliverables = st.text_area("Deliverables (e.g. 5 Reels, 3 Carousels)", height=100)
-    total_amount = st.number_input("Total Amount (USD)", min_value=0.0, format="%.2f")
+    st.markdown("### 🧾 Your Info")
+    your_name = st.text_input("Your Name or Brand", "Fabrizio Fonseca")
+
+    st.markdown("### 👤 Client Info")
+    client_name = st.text_input("Client’s Name or Business")
+    send_to = st.text_input("Client’s Email Address")
+
+    st.markdown("### 📌 Service Details")
+    project_title = st.text_input("What is this invoice for?", placeholder="e.g. Instagram Content for June")
+    service_type = st.selectbox("Type of Service", [
+        "1:1 Coaching", "Strategy Session", "Instagram Reels",
+        "TikTok Batch", "Content Planning", "Consulting Call", "Other"
+    ])
+    session_date = st.date_input("Service or Delivery Date", value=date.today())
+
+    st.markdown("### 💰 Payment Info")
+    amount = st.number_input("Total Amount (USD)", min_value=0.0, format="%.2f")
     payment_method = st.selectbox("Preferred Payment Method", ["PayPal", "Stripe", "Bank Transfer"])
-    invoice_date = st.date_input("Invoice Date", value=date.today())
-    due_date = st.date_input("Payment Due Date")
-    notes = st.text_area("Notes (Optional)", placeholder="e.g. Payment due within 7 days")
-    email_to_receive = st.text_input("Email that will receive the invoice")
-    submit = st.form_submit_button("Generate Invoice")
+    notes = st.text_area("Notes (optional)", placeholder="e.g. Payment due within 7 days. Thanks again!")
 
-# --- HTML to PDF via PDFShift ---
-def html_to_pdf_via_pdfshift(html_string):
-    API_KEY = st.secrets["PDFSHIFT_API_KEY"]
+    submitted = st.form_submit_button("📤 Generate Invoice & Send")
 
-    response = requests.post(
-        "https://api.pdfshift.io/v3/convert/pdf",
-        headers={"X-API-Key": API_KEY},
-        json={"source": html_string}
+
+# --- PDF + EMAIL ---
+if submitted:
+    with open("invoice_template.html", "r") as f:
+        template = Template(f.read())
+
+    html_out = template.render(
+        your_name=your_name,
+        client_name=client_name,
+        project_title=project_title,
+        service_type=service_type,
+        session_date=session_date.strftime("%B %d, %Y"),
+        amount=amount,
+        payment_method=payment_method,
+        notes=notes,
+        invoice_id=f"{date.today().strftime('%Y%m%d')}-{client_name[:3].upper()}"
     )
 
-    if response.status_code == 200:
-        return response.content
-    else:
-        raise Exception(f"PDFShift failed: {response.text}")
-
-
-# --- Generate & Email ---
-if submit:
-    if not email_to_receive or "@" not in email_to_receive:
-        st.error("❌ Please enter a valid recipient email.")
-    else:
-        # Load and render HTML template
-        with open("invoice_template.html", "r") as f:
-            template = Template(f.read())
-
-        html_out = template.render(
-            creator_name=creator_name,
-            client_name=client_name,
-            project_name=project_name,
-            deliverables=deliverables,
-            total_amount=total_amount,
-            payment_method=payment_method,
-            invoice_date=invoice_date.strftime("%B %d, %Y"),
-            due_date=due_date.strftime("%B %d, %Y"),
-            notes=notes,
-            invoice_id=f"{date.today().strftime('%Y%m%d')}-{client_name[:3].upper()}"
+    def html_to_pdf_via_pdfshift(html):
+        response = requests.post(
+            "https://api.pdfshift.io/v3/convert/pdf",
+            headers={"X-API-Key": PDFSHIFT_API_KEY},
+            json={"source": html}
         )
+        if not response.ok:
+            raise Exception(f"PDFShift failed: {response.text}")
+        return response.content
 
-        # Generate PDF
-        try:
-            pdf_bytes = html_to_pdf_via_pdfshift(html_out)
-            b64 = base64.b64encode(pdf_bytes).decode()
-        except Exception as e:
-            st.error("❌ Failed to generate PDF:")
-            st.text(traceback.format_exc())
-            st.stop()
+    try:
+        pdf_bytes = html_to_pdf_via_pdfshift(html_out)
+    except Exception as e:
+        st.error(f"❌ Failed to generate PDF:\n\n{e}")
+        st.stop()
 
-        # Send email
-        sender_email = st.secrets["EMAIL_USER"]
-        sender_password = st.secrets["EMAIL_PASS"]
+    # Save to temp for download
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+        tmp_pdf.write(pdf_bytes)
+        tmp_pdf.seek(0)
+        b64 = base64.b64encode(tmp_pdf.read()).decode()
 
-        msg = EmailMessage()
-        msg['Subject'] = f"Invoice for {project_name}"
-        msg['From'] = sender_email
-        msg['To'] = email_to_receive
-        msg.set_content(f"Hi {client_name},\n\nPlease find attached your invoice for: {project_name}.\n\nThanks,\n{creator_name}")
-        msg.add_attachment(pdf_bytes, maintype='application', subtype='pdf', filename="invoice.pdf")
+    # Send email
+    msg = EmailMessage()
+    msg["Subject"] = f"Invoice for {project_title}"
+    msg["From"] = EMAIL_USER
+    msg["To"] = send_to
+    msg.set_content(f"""Hi {client_name},
 
-        try:
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-                smtp.login(sender_email, sender_password)
-                smtp.send_message(msg)
-            st.success(f"✅ Invoice sent to {email_to_receive}")
-        except Exception as e:
-            st.error("❌ Failed to send email:")
-            st.text(traceback.format_exc())
+Please find attached your invoice for the project: {project_title}.
 
-        # Download link
-        href = f'<a href="data:application/pdf;base64,{b64}" download="invoice.pdf">📄 Download Your Invoice</a>'
-        st.markdown(href, unsafe_allow_html=True)
+Thanks,
+{your_name}
+""")
+    msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename="invoice.pdf")
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(EMAIL_USER, EMAIL_PASS)
+            smtp.send_message(msg)
+        st.success(f"✅ Invoice sent to {send_to}")
+    except Exception as e:
+        st.error(f"❌ Failed to send email:\n\n{e}")
+
+    st.markdown(f'<a href="data:application/pdf;base64,{b64}" download="invoice.pdf">📄 Download Your Invoice</a>', unsafe_allow_html=True)
