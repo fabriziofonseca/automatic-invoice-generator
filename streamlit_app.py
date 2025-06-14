@@ -34,14 +34,15 @@ def html_to_pdf_via_pdfshift(html_string):
 
     response = requests.post(
         "https://api.pdfshift.io/v3/convert/pdf",
-        auth=(API_KEY, ""),
+        headers={"X-API-Key": API_KEY},
         json={"source": html_string}
     )
 
     if response.status_code == 200:
-        return response.content  # PDF bytes
+        return response.content
     else:
         raise Exception(f"PDFShift failed: {response.text}")
+
 
 # --- Generate & Email ---
 if submit:
