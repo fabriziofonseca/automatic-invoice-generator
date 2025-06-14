@@ -64,8 +64,9 @@ if submit:
         b64 = html_to_pdf(html_out)
 
         # Email setup (use your real email + app password)
-        sender_email = "your_email@gmail.com"
-        sender_password = "your_app_password"
+        sender_email = st.secrets["EMAIL_USER"]
+        sender_password = st.secrets["EMAIL_PASS"]
+
 
         msg = EmailMessage()
         msg['Subject'] = f"Invoice for {project_name}"
