@@ -1,126 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-
     body {
-      font-family: 'Inter', sans-serif;
-      color: #2e2e2e;
+      font-family: 'Helvetica Neue', sans-serif;
+      color: #222;
       padding: 40px;
       font-size: 14px;
     }
 
     .header {
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 40px;
     }
 
-    h1 {
-      font-size: 28px;
+    .invoice-title {
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .invoice-meta {
+      text-align: right;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .billed-to {
+      margin-top: 10px;
+    }
+
+    .billed-to h4 {
       margin: 0;
-      color: #111;
-    }
-
-    .invoice-id {
       font-size: 14px;
-      margin-top: 5px;
-      color: #777;
-    }
-
-    .section {
-      margin-bottom: 30px;
-    }
-
-    .label {
       font-weight: 600;
-      color: #444;
     }
 
-    .info-table {
+    .table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 40px;
+      margin-bottom: 20px;
     }
 
-    .info-table td {
-      padding: 6px 0;
-      vertical-align: top;
+    .table th {
+      text-align: left;
+      padding: 10px;
+      background-color: #f3f3f3;
+      border-bottom: 1px solid #ddd;
     }
 
-    .line {
-      border-top: 1px solid #ddd;
-      margin: 30px 0;
-    }
-
-    .deliverables {
-      background: #f9f9f9;
-      padding: 12px;
-      border-radius: 6px;
-      white-space: pre-wrap;
-      border: 1px solid #eee;
-    }
-
-    .total {
-      text-align: right;
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 20px;
+    .table td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
     }
 
     .footer {
-      margin-top: 40px;
-      text-align: center;
       font-size: 12px;
-      color: #888;
+      margin-top: 40px;
+      color: #555;
+    }
+
+    .bold {
+      font-weight: bold;
+    }
+
+    .align-right {
+      text-align: right;
     }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <h1>INVOICE</h1>
-    <div class="invoice-id">#{{ invoice_id }}</div>
+    <div class="billed-to">
+      <h4>BILLED TO:</h4>
+      <p>{{ client_name }}</p>
+    </div>
+    <div class="invoice-meta">
+      <div><strong>Invoice No:</strong> {{ invoice_id }}</div>
+      <div><strong>Date:</strong> {{ invoice_date }}</div>
+    </div>
   </div>
 
-  <div class="section">
-    <table class="info-table">
+  <table class="table">
+    <thead>
       <tr>
-        <td><span class="label">From:</span> {{ creator_name }}</td>
-        <td><span class="label">To:</span> {{ client_name }}</td>
+        <th>Item</th>
+        <th class="align-right">Qty</th>
+        <th class="align-right">Unit Price</th>
+        <th class="align-right">Total</th>
       </tr>
+    </thead>
+    <tbody>
+      {% for item in line_items %}
       <tr>
-        <td><span class="label">Project:</span> {{ project_name }}</td>
-        <td><span class="label">Payment Method:</span> {{ payment_method }}</td>
+        <td>{{ item.name }}</td>
+        <td class="align-right">{{ item.qty }}</td>
+        <td class="align-right">${{ '%.2f'|format(item.price) }}</td>
+        <td class="align-right">${{ '%.2f'|format(item.qty * item.price) }}</td>
       </tr>
-      <tr>
-        <td><span class="label">Date:</span> {{ invoice_date }}</td>
-        <td><span class="label">Due:</span> {{ due_date }}</td>
-      </tr>
-    </table>
-  </div>
+      {% endfor %}
+    </tbody>
+  </table>
 
-  <div class="section">
-    <span class="label">Deliverables:</span>
-    <div class="deliverables">{{ deliverables }}</div>
-  </div>
+  <p class="footer">
+    Payment via {{ payment_method }}.<br>
+    {{ notes }}
+  </p>
 
-  <div class="line"></div>
-
-  <div class="total">
-    Total: ${{ '%.2f'|format(total_amount) }}
-  </div>
-
-  {% if notes %}
-  <div class="section">
-    <span class="label">Notes:</span>
-    <p>{{ notes }}</p>
-  </div>
-  {% endif %}
-
-  <div class="footer">
-    Thanks you!
-  </div>
+  <p class="footer bold">Thank you for your business!</p>
 
 </body>
 </html>
